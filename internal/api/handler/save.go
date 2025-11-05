@@ -45,7 +45,7 @@ func (sch *SaveConversationHandler) Handle(c *gin.Context) {
 			Error: &models.ErrorInfo{
 				Code:    "INVALID_REQUEST",
 				Message: "Invalid request body",
-				Details: map[string]string{
+				Details: map[string]interface{}{
 					"error": err.Error(),
 				},
 			},
@@ -61,14 +61,49 @@ func (sch *SaveConversationHandler) Handle(c *gin.Context) {
 			Error: &models.ErrorInfo{
 				Code:    "INVALID_REQUEST",
 				Message: "conversation_id and messages are required",
-				Details: map[string]string{
-					"field":  "conversation_id or messages",
+				Details: map[string]interface{}{
+					"fields": []string{"conversation_id", "messages"},
 					"reason": "required fields missing",
 				},
 			},
 			Metadata: models.Metadata{},
 		})
 		return
+	}
+
+	// Validate messages have content
+	for i, msg := range req.Messages {
+		if msg.Content == "" {
+			c.JSON(http.StatusBadRequest, models.APIResponse{
+				Success: false,
+				Error: &models.ErrorInfo{
+					Code:    "INVALID_REQUEST",
+					Message: "message content cannot be empty",
+					Details: map[string]interface{}{
+						"message_index": i,
+						"reason":        "message content is required",
+					},
+				},
+				Metadata: models.Metadata{},
+			})
+			return
+		}
+		if msg.Role != "user" && msg.Role != "assistant" {
+			c.JSON(http.StatusBadRequest, models.APIResponse{
+				Success: false,
+				Error: &models.ErrorInfo{
+					Code:    "INVALID_REQUEST",
+					Message: "invalid message role",
+					Details: map[string]interface{}{
+						"message_index": i,
+						"valid_roles":   []string{"user", "assistant"},
+						"provided_role": msg.Role,
+					},
+				},
+				Metadata: models.Metadata{},
+			})
+			return
+		}
 	}
 
 	// Save conversation
@@ -79,7 +114,7 @@ func (sch *SaveConversationHandler) Handle(c *gin.Context) {
 			Error: &models.ErrorInfo{
 				Code:    "INTERNAL_ERROR",
 				Message: "failed to save conversation",
-				Details: map[string]string{
+				Details: map[string]interface{}{
 					"error": err.Error(),
 				},
 			},

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -56,7 +57,7 @@ func (sch *SearchConversationHandler) Handle(c *gin.Context) {
 			Error: &models.ErrorInfo{
 				Code:    "INVALID_REQUEST",
 				Message: "Query text cannot be empty",
-				Details: map[string]string{
+				Details: map[string]interface{}{
 					"field":  "query",
 					"reason": "required field missing",
 				},
@@ -65,6 +66,8 @@ func (sch *SearchConversationHandler) Handle(c *gin.Context) {
 		})
 		return
 	}
+
+	query = strings.TrimSpace(query)
 
 	req := models.ConversationSearchRequest{
 		Query: query,

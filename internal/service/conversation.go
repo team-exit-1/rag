@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -53,9 +54,14 @@ func (cs *ConversationService) SaveConversation(ctx context.Context, req *models
 
 	// Save conversation to PostgreSQL
 	now := time.Now()
-	metadataStr := ""
+
+	metadataStr := "{}"
 	if req.Metadata != nil {
-		metadataStr = fmt.Sprintf("{\"source\":\"%s\",\"session_id\":\"%s\"}", req.Metadata.Source, req.Metadata.SessionID)
+		metadataBytes, err := json.Marshal(req.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataStr = string(metadataBytes)
 	}
 
 	conversation := &models.Conversation{
