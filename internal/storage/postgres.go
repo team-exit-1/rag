@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"repo-rag-server/internal/models"
 )
@@ -106,7 +106,7 @@ func (ps *PostgresStore) GetConversationsByIDs(ctx context.Context, ids []string
 		ORDER BY created_at DESC
 	`
 
-	rows, err := ps.db.QueryContext(ctx, query, ids)
+	rows, err := ps.db.QueryContext(ctx, query, pq.Array(ids))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query conversations: %w", err)
 	}
