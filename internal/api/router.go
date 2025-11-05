@@ -21,7 +21,7 @@ func Router(conversationService *service.ConversationService) *gin.Engine {
 	router.GET("/health", handler.HealthCheck)
 
 	// API v1 routes
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/rag")
 	{
 		// Save conversation endpoint
 		saveHandler := handler.NewSaveConversationHandler(conversationService)
