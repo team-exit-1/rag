@@ -180,6 +180,10 @@ func (qs *QdrantStore) SearchVectors(ctx context.Context, queryVector []float32,
 		}
 
 		result := models.ConversationSearchResult{
+			Conversation: &models.Conversation{
+				ID: conversationID,
+			},
+
 			Score: item.Score,
 		}
 		searchResults = append(searchResults, result)

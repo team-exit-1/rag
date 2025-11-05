@@ -60,7 +60,7 @@ func (cs *ConversationService) SaveConversation(ctx context.Context, req *models
 
 	// Save embedding to Qdrant
 	metadata := map[string]interface{}{
-		"user_id": req.UserID,
+		"user_id":    req.UserID,
 		"created_at": now.Unix(),
 	}
 
@@ -108,10 +108,10 @@ func (cs *ConversationService) SearchConversations(ctx context.Context, req *mod
 	scoreMap := make(map[string]float32)
 
 	for _, result := range searchResults {
-		// We need to get the conversation ID from the Qdrant search
-		// For now, we'll need to modify the search results structure
-		// This is a limitation that needs to be addressed
-		scoreMap[""] = result.Score
+		if result.Conversation != nil && result.Conversation.ID != "" {
+			conversationIDs = append(conversationIDs, result.Conversation.ID)
+			scoreMap[result.Conversation.ID] = result.Score
+		}
 	}
 
 	// Get conversations from PostgreSQL
