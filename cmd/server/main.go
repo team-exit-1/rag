@@ -41,6 +41,13 @@ func main() {
 	}
 	defer qdrantStore.Close()
 
+	// Run Qdrant migrations
+	log.Println("Running Qdrant migrations...")
+	if err := storage.MigrateQdrant(qdrantStore, cfg.EmbeddingDim); err != nil {
+		log.Fatalf("Failed to run Qdrant migrations: %v", err)
+	}
+	log.Println("Qdrant migrations completed")
+
 	// Initialize OpenAI embedding provider
 	embeddingProvider := storage.NewOpenAIEmbeddingProvider(
 		cfg.OpenAIAPIKey,

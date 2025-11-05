@@ -50,3 +50,15 @@ func Migrate(db *sql.DB) error {
 
 	return nil
 }
+
+// MigrateQdrant initializes Qdrant collection for vector storage
+func MigrateQdrant(qdrantStore *QdrantStore, vectorSize int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := qdrantStore.InitializeCollection(ctx, vectorSize); err != nil {
+		return fmt.Errorf("failed to initialize Qdrant collection: %w", err)
+	}
+
+	return nil
+}

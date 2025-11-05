@@ -28,6 +28,45 @@ func NewQdrantStore(baseURL string, collection string) (*QdrantStore, error) {
 	}, nil
 }
 
+// InitializeCollection creates the collection if it doesn't exist
+func (qs *QdrantStore) InitializeCollection(ctx context.Context, vectorSize int) error {
+	// Prepare collection creation request
+	createRequest := map[string]interface{}{
+		"vectors": map[string]interface{}{
+			"size":     vectorSize,
+			"distance": "Cosine",
+		},
+	}
+
+	body, err := json.Marshal(createRequest)
+	if err != nil {
+		return fmt.Errorf("failed to marshal collection creation request: %w", err)
+	}
+
+	// Make HTTP request to create collection
+	url := fmt.Sprintf("%s/collections/%s", qs.baseURL, qs.collection)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create collection request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := qs.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute collection creation request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 200 OK or 400 Bad Request (if collection already exists) are acceptable
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusBadRequest {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("qdrant returned status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
+
 // SaveVector saves an embedding vector to Qdrant
 func (qs *QdrantStore) SaveVector(ctx context.Context, conversationID string, vector []float32, metadata map[string]interface{}) error {
 	pointID := hashConversationID(conversationID)
@@ -83,8 +122,8 @@ func (qs *QdrantStore) SaveVector(ctx context.Context, conversationID string, ve
 func (qs *QdrantStore) SearchVectors(ctx context.Context, queryVector []float32, limit int) ([]models.ConversationSearchResult, error) {
 	// Prepare search request
 	searchRequest := map[string]interface{}{
-		"vector": queryVector,
-		"limit":  limit,
+		"vector":       queryVector,
+		"limit":        limit,
 		"with_payload": true,
 	}
 
