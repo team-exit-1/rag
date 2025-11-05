@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"repo-rag-server/internal/models"
-	"repo-rag-server/internal/storage"
+	"refo-rag-server/internal/models"
+	"refo-rag-server/internal/storage"
 )
 
 // ConversationService handles conversation business logic

@@ -16,10 +16,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"repo-rag-server/internal/api"
-	"repo-rag-server/internal/config"
-	"repo-rag-server/internal/service"
-	"repo-rag-server/internal/storage"
+	"refo-rag-server/internal/api"
+	"refo-rag-server/internal/config"
+	"refo-rag-server/internal/service"
+	"refo-rag-server/internal/storage"
 )
 
 func main() {

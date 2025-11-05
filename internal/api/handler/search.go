@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"repo-rag-server/internal/models"
-	"repo-rag-server/internal/service"
+	"refo-rag-server/internal/models"
+	"refo-rag-server/internal/service"
 )
 
 // SearchConversationHandler handles conversation search requests

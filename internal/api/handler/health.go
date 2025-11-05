@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"repo-rag-server/internal/models"
-	"repo-rag-server/internal/storage"
+	"refo-rag-server/internal/models"
+	"refo-rag-server/internal/storage"
 )
 
 // HealthCheckHandler handles health check requests

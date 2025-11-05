@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"repo-rag-server/internal/models"
+	"refo-rag-server/internal/models"
 )
 
 // ConversationStore defines the interface for storing conversations

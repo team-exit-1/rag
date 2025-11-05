@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"repo-rag-server/internal/models"
+	"refo-rag-server/internal/models"
 )
 
 // QdrantStore implements VectorStore using REST API

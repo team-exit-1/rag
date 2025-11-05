@@ -1,4 +1,4 @@
-module repo-rag-server
+module refo-rag-server
 
 go 1.24.0
 

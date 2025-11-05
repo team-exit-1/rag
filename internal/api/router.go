@@ -5,10 +5,10 @@ import (
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "repo-rag-server/docs"
-	"repo-rag-server/internal/api/handler"
-	"repo-rag-server/internal/service"
-	"repo-rag-server/internal/storage"
+	_ "refo-rag-server/docs"
+	"refo-rag-server/internal/api/handler"
+	"refo-rag-server/internal/service"
+	"refo-rag-server/internal/storage"
 )
 
 // Router configures all API routes
