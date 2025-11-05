@@ -28,8 +28,59 @@ func NewQdrantStore(baseURL string, collection string) (*QdrantStore, error) {
 	}, nil
 }
 
+// CollectionExists checks if a collection exists in Qdrant
+func (qs *QdrantStore) CollectionExists(ctx context.Context) (bool, error) {
+	url := fmt.Sprintf("%s/collections", qs.baseURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create collections list request: %w", err)
+	}
+
+	resp, err := qs.client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute collections list request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return false, fmt.Errorf("qdrant returned status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Parse response
+	var listResp struct {
+		Collections []struct {
+			Name string `json:"name"`
+		} `json:"collections"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
+		return false, fmt.Errorf("failed to decode collections list response: %w", err)
+	}
+
+	// Check if our collection exists
+	for _, col := range listResp.Collections {
+		if col.Name == qs.collection {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 // InitializeCollection creates the collection if it doesn't exist
 func (qs *QdrantStore) InitializeCollection(ctx context.Context, vectorSize int) error {
+	// First, check if collection already exists
+	exists, err := qs.CollectionExists(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check collection existence: %w", err)
+	}
+
+	if exists {
+		fmt.Printf("Collection '%s' already exists, skipping creation\n", qs.collection)
+		return nil
+	}
+
 	// Prepare collection creation request
 	createRequest := map[string]interface{}{
 		"vectors": map[string]interface{}{
@@ -58,12 +109,12 @@ func (qs *QdrantStore) InitializeCollection(ctx context.Context, vectorSize int)
 	}
 	defer resp.Body.Close()
 
-	// 200 OK, 201 Created, 400 Bad Request, or 409 Conflict (collection already exists) are acceptable
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusBadRequest && resp.StatusCode != http.StatusConflict {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("qdrant returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
+	fmt.Printf("Successfully created collection '%s'\n", qs.collection)
 	return nil
 }
 
