@@ -26,9 +26,9 @@ type Config struct {
 	QdrantCollection string
 
 	// OpenAI
-	OpenAIAPIKey  string
-	OpenAIModel   string
-	EmbeddingDim  int
+	OpenAIAPIKey string
+	OpenAIModel  string
+	EmbeddingDim int
 
 	// Logging
 	LogLevel string
@@ -57,9 +57,6 @@ func Load() (*Config, error) {
 	// Validate required fields
 	if cfg.OpenAIAPIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY environment variable is required")
-	}
-	if cfg.PostgresPassword == "" {
-		return nil, fmt.Errorf("POSTGRES_PASSWORD environment variable is required")
 	}
 
 	return cfg, nil
