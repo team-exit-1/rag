@@ -29,7 +29,7 @@ func Router(conversationService *service.ConversationService) *gin.Engine {
 
 		// Search conversations endpoint
 		searchHandler := handler.NewSearchConversationHandler(conversationService)
-		v1.POST("/conversations/search", searchHandler.Handle)
+		v1.GET("/conversations/search", searchHandler.Handle)
 	}
 
 	return router

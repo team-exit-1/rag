@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -25,23 +26,32 @@ func NewSearchConversationHandler(conversationService *service.ConversationServi
 // @Summary Search conversations
 // @Description Search for conversations by semantic similarity
 // @Tags conversations
-// @Accept json
 // @Produce json
-// @Param request body models.ConversationSearchRequest true "Conversation search request"
+// @Param query query string true "Search query"
+// @Param user_id query string false "User ID"
+// @Param limit query int false "Result limit (default: 10, max: 100)"
 // @Success 200 {object} map[string]interface{} "Search results with count"
 // @Failure 400 {object} map[string]string "Invalid request"
 // @Failure 500 {object} map[string]string "Server error"
-// @Router /api/v1/conversations/search [post]
+// @Router /api/v1/conversations/search [get]
 func (sch *SearchConversationHandler) Handle(c *gin.Context) {
-	var req models.ConversationSearchRequest
+	// Get query parameters
+	query := c.Query("query")
+	userID := c.Query("user_id")
+	limitStr := c.DefaultQuery("limit", "10")
 
-	// Bind JSON request body
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid request body",
-			"details": err.Error(),
-		})
-		return
+	// Parse limit
+	limit := 10
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+
+	req := models.ConversationSearchRequest{
+		Query:  query,
+		UserID: userID,
+		Limit:  limit,
 	}
 
 	// Validate required fields

@@ -76,11 +76,8 @@ const docTemplate = `{
             }
         },
         "/api/v1/conversations/search": {
-            "post": {
+            "get": {
                 "description": "Search for conversations by semantic similarity",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -90,13 +87,23 @@ const docTemplate = `{
                 "summary": "Search conversations",
                 "parameters": [
                     {
-                        "description": "Conversation search request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ConversationSearchRequest"
-                        }
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result limit (default: 10, max: 100)",
+                        "name": "limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -197,20 +204,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "question": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ConversationSearchRequest": {
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "type": "integer"
-                },
-                "query": {
                     "type": "string"
                 },
                 "user_id": {

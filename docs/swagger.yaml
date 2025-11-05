@@ -35,15 +35,6 @@ definitions:
       user_id:
         type: string
     type: object
-  models.ConversationSearchRequest:
-    properties:
-      limit:
-        type: integer
-      query:
-        type: string
-      user_id:
-        type: string
-    type: object
 info:
   contact:
     name: API Support
@@ -91,17 +82,22 @@ paths:
       tags:
       - conversations
   /api/v1/conversations/search:
-    post:
-      consumes:
-      - application/json
+    get:
       description: Search for conversations by semantic similarity
       parameters:
-      - description: Conversation search request
-        in: body
-        name: request
+      - description: Search query
+        in: query
+        name: query
         required: true
-        schema:
-          $ref: '#/definitions/models.ConversationSearchRequest'
+        type: string
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      - description: 'Result limit (default: 10, max: 100)'
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
