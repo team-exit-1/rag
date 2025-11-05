@@ -1,0 +1,141 @@
+basePath: /
+definitions:
+  handler.HealthResponse:
+    properties:
+      service:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ConversationResponse:
+    properties:
+      answer:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      metadata:
+        type: string
+      question:
+        type: string
+      score:
+        type: number
+      user_id:
+        type: string
+    type: object
+  models.ConversationSaveRequest:
+    properties:
+      answer:
+        type: string
+      metadata:
+        type: string
+      question:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.ConversationSearchRequest:
+    properties:
+      limit:
+        type: integer
+      query:
+        type: string
+      user_id:
+        type: string
+    type: object
+info:
+  contact:
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Retrieval Augmented Generation Server with semantic search capabilities
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: RAG Server API
+  version: "1.0"
+paths:
+  /api/v1/conversations:
+    post:
+      consumes:
+      - application/json
+      description: Save a new conversation with question and answer
+      parameters:
+      - description: Conversation save request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConversationSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ConversationResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Save a conversation
+      tags:
+      - conversations
+  /api/v1/conversations/search:
+    post:
+      consumes:
+      - application/json
+      description: Search for conversations by semantic similarity
+      parameters:
+      - description: Conversation search request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConversationSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search results with count
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search conversations
+      tags:
+      - conversations
+  /health:
+    get:
+      description: Check if the RAG server is healthy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: Health check
+      tags:
+      - health
+swagger: "2.0"

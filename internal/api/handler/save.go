@@ -22,13 +22,23 @@ func NewSaveConversationHandler(conversationService *service.ConversationService
 }
 
 // Handle processes save conversation requests
+// @Summary Save a conversation
+// @Description Save a new conversation with question and answer
+// @Tags conversations
+// @Accept json
+// @Produce json
+// @Param request body models.ConversationSaveRequest true "Conversation save request"
+// @Success 201 {object} models.ConversationResponse
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 500 {object} map[string]string "Server error"
+// @Router /api/v1/conversations [post]
 func (sch *SaveConversationHandler) Handle(c *gin.Context) {
 	var req models.ConversationSaveRequest
 
 	// Bind JSON request body
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid request body",
+			"error":   "invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -46,7 +56,7 @@ func (sch *SaveConversationHandler) Handle(c *gin.Context) {
 	response, err := sch.conversationService.SaveConversation(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to save conversation",
+			"error":   "failed to save conversation",
 			"details": err.Error(),
 		})
 		return

@@ -1,3 +1,12 @@
+// @title RAG Server API
+// @version 1.0
+// @description Retrieval Augmented Generation Server with semantic search capabilities
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @basePath /
 package main
 
 import (

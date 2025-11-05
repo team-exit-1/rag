@@ -22,6 +22,16 @@ func NewSearchConversationHandler(conversationService *service.ConversationServi
 }
 
 // Handle processes search conversation requests
+// @Summary Search conversations
+// @Description Search for conversations by semantic similarity
+// @Tags conversations
+// @Accept json
+// @Produce json
+// @Param request body models.ConversationSearchRequest true "Conversation search request"
+// @Success 200 {object} map[string]interface{} "Search results with count"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 500 {object} map[string]string "Server error"
+// @Router /api/v1/conversations/search [post]
 func (sch *SearchConversationHandler) Handle(c *gin.Context) {
 	var req models.ConversationSearchRequest
 

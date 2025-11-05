@@ -2,7 +2,10 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "repo-rag-server/docs"
 	"repo-rag-server/internal/api/handler"
 	"repo-rag-server/internal/service"
 )
@@ -10,6 +13,9 @@ import (
 // Router configures all API routes
 func Router(conversationService *service.ConversationService) *gin.Engine {
 	router := gin.Default()
+
+	// Swagger UI
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// Health check endpoint
 	router.GET("/health", handler.HealthCheck)
