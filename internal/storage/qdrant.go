@@ -49,9 +49,11 @@ func (qs *QdrantStore) CollectionExists(ctx context.Context) (bool, error) {
 
 	// Parse response
 	var listResp struct {
-		Collections []struct {
-			Name string `json:"name"`
-		} `json:"collections"`
+		Result struct {
+			Collections []struct {
+				Name string `json:"name"`
+			} `json:"collections"`
+		} `json:"result"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
@@ -59,7 +61,7 @@ func (qs *QdrantStore) CollectionExists(ctx context.Context) (bool, error) {
 	}
 
 	// Check if our collection exists
-	for _, col := range listResp.Collections {
+	for _, col := range listResp.Result.Collections {
 		if col.Name == qs.collection {
 			return true, nil
 		}
