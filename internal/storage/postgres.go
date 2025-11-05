@@ -141,3 +141,8 @@ func (ps *PostgresStore) GetConversationsByIDs(ctx context.Context, ids []string
 func (ps *PostgresStore) Close() error {
 	return ps.db.Close()
 }
+
+// GetDB returns the database connection
+func (ps *PostgresStore) GetDB() *sql.DB {
+	return ps.db
+}

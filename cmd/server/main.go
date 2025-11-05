@@ -27,6 +27,13 @@ func main() {
 	}
 	defer postgresStore.Close()
 
+	// Run migrations
+	log.Println("Running database migrations...")
+	if err := storage.Migrate(postgresStore.GetDB()); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	log.Println("Database migrations completed")
+
 	// Initialize Qdrant connection
 	qdrantStore, err := storage.NewQdrantStore(cfg.GetQdrantURL(), cfg.QdrantCollection)
 	if err != nil {
