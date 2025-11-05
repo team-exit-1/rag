@@ -1,38 +1,47 @@
 basePath: /
 definitions:
-  handler.HealthResponse:
+  models.APIResponse:
     properties:
-      service:
-        type: string
-      status:
-        type: string
-    type: object
-  models.ConversationResponse:
-    properties:
-      answer:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
+      data: {}
+      error:
+        $ref: '#/definitions/models.ErrorInfo'
       metadata:
-        type: string
-      question:
-        type: string
-      score:
-        type: number
-      user_id:
-        type: string
+        $ref: '#/definitions/models.Metadata'
+      success:
+        type: boolean
     type: object
   models.ConversationSaveRequest:
     properties:
-      answer:
+      conversation_id:
         type: string
+      messages:
+        items:
+          $ref: '#/definitions/models.Message'
+        type: array
       metadata:
+        $ref: '#/definitions/models.Metadata'
+    type: object
+  models.ErrorInfo:
+    properties:
+      code:
         type: string
-      question:
+      details: {}
+      message:
         type: string
-      user_id:
+    type: object
+  models.Message:
+    properties:
+      content:
+        type: string
+      role:
+        description: '"user" or "assistant"'
+        type: string
+    type: object
+  models.Metadata:
+    properties:
+      session_id:
+        type: string
+      source:
         type: string
     type: object
 info:
@@ -47,11 +56,42 @@ info:
   title: RAG Server API
   version: "1.0"
 paths:
-  /api/v1/conversations:
+  /api/rag/conversation/search:
+    get:
+      description: Search for conversations by semantic similarity
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: 'Result limit (default: 10, max: 100)'
+        in: query
+        name: top_k
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search results with metadata
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Search conversations
+      tags:
+      - conversations
+  /api/rag/conversation/store:
     post:
       consumes:
       - application/json
-      description: Save a new conversation with question and answer
+      description: Save a new conversation with messages and metadata
       parameters:
       - description: Conversation save request
         in: body
@@ -63,74 +103,34 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Conversation saved successfully
           schema:
-            $ref: '#/definitions/models.ConversationResponse'
+            $ref: '#/definitions/models.APIResponse'
         "400":
           description: Invalid request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.APIResponse'
         "500":
           description: Server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.APIResponse'
       summary: Save a conversation
       tags:
       - conversations
-  /api/v1/conversations/search:
+  /api/rag/health:
     get:
-      description: Search for conversations by semantic similarity
-      parameters:
-      - description: Search query
-        in: query
-        name: query
-        required: true
-        type: string
-      - description: User ID
-        in: query
-        name: user_id
-        type: string
-      - description: 'Result limit (default: 10, max: 100)'
-        in: query
-        name: limit
-        type: integer
+      description: Check if the RAG server and its dependencies are healthy
       produces:
       - application/json
       responses:
         "200":
-          description: Search results with count
+          description: Server is healthy
           schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request
+            $ref: '#/definitions/models.APIResponse'
+        "503":
+          description: Service unavailable
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Search conversations
-      tags:
-      - conversations
-  /health:
-    get:
-      description: Check if the RAG server is healthy
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.HealthResponse'
+            $ref: '#/definitions/models.APIResponse'
       summary: Health check
       tags:
       - health

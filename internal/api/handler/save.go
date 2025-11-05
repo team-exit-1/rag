@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -23,44 +24,84 @@ func NewSaveConversationHandler(conversationService *service.ConversationService
 
 // Handle processes save conversation requests
 // @Summary Save a conversation
-// @Description Save a new conversation with question and answer
+// @Description Save a new conversation with messages and metadata
 // @Tags conversations
 // @Accept json
 // @Produce json
 // @Param request body models.ConversationSaveRequest true "Conversation save request"
-// @Success 201 {object} models.ConversationResponse
-// @Failure 400 {object} map[string]string "Invalid request"
-// @Failure 500 {object} map[string]string "Server error"
-// @Router /api/v1/conversations [post]
+// @Success 201 {object} models.APIResponse "Conversation saved successfully"
+// @Failure 400 {object} models.APIResponse "Invalid request"
+// @Failure 500 {object} models.APIResponse "Server error"
+// @Router /api/rag/conversation/store [post]
 func (sch *SaveConversationHandler) Handle(c *gin.Context) {
+	startTime := time.Now()
+
 	var req models.ConversationSaveRequest
 
 	// Bind JSON request body
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid request body",
-			"details": err.Error(),
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.ErrorInfo{
+				Code:    "INVALID_REQUEST",
+				Message: "Invalid request body",
+				Details: map[string]string{
+					"error": err.Error(),
+				},
+			},
+			Metadata: models.Metadata{},
 		})
 		return
 	}
 
 	// Validate required fields
-	if req.UserID == "" || req.Question == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "user_id and question are required",
+	if req.ConversationID == "" || len(req.Messages) == 0 {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.ErrorInfo{
+				Code:    "INVALID_REQUEST",
+				Message: "conversation_id and messages are required",
+				Details: map[string]string{
+					"field":  "conversation_id or messages",
+					"reason": "required fields missing",
+				},
+			},
+			Metadata: models.Metadata{},
 		})
 		return
 	}
 
 	// Save conversation
-	response, err := sch.conversationService.SaveConversation(c.Request.Context(), &req)
+	_, err := sch.conversationService.SaveConversation(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "failed to save conversation",
-			"details": err.Error(),
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Success: false,
+			Error: &models.ErrorInfo{
+				Code:    "INTERNAL_ERROR",
+				Message: "failed to save conversation",
+				Details: map[string]string{
+					"error": err.Error(),
+				},
+			},
+			Metadata: models.Metadata{},
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, response)
+	processingTimeMs := time.Since(startTime).Milliseconds()
+
+	// Build save response
+	saveResp := models.SaveResponse{
+		ConversationID:   req.ConversationID,
+		VectorsCreated:   1,
+		MessagesStored:   len(req.Messages),
+		StoredAt:         time.Now().UTC().Format(time.RFC3339),
+		ProcessingTimeMs: processingTimeMs,
+	}
+
+	c.JSON(http.StatusCreated, models.APIResponse{
+		Success:  true,
+		Data:     saveResp,
+		Metadata: models.Metadata{},
+	})
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -28,52 +29,82 @@ func NewSearchConversationHandler(conversationService *service.ConversationServi
 // @Tags conversations
 // @Produce json
 // @Param query query string true "Search query"
-// @Param user_id query string false "User ID"
-// @Param limit query int false "Result limit (default: 10, max: 100)"
-// @Success 200 {object} map[string]interface{} "Search results with count"
-// @Failure 400 {object} map[string]string "Invalid request"
-// @Failure 500 {object} map[string]string "Server error"
-// @Router /api/v1/conversations/search [get]
+// @Param top_k query int false "Result limit (default: 10, max: 100)"
+// @Success 200 {object} models.APIResponse "Search results with metadata"
+// @Failure 400 {object} models.APIResponse "Invalid request"
+// @Failure 500 {object} models.APIResponse "Server error"
+// @Router /api/rag/conversation/search [get]
 func (sch *SearchConversationHandler) Handle(c *gin.Context) {
+	startTime := time.Now()
+
 	// Get query parameters
 	query := c.Query("query")
-	userID := c.Query("user_id")
-	limitStr := c.DefaultQuery("limit", "10")
+	topKStr := c.DefaultQuery("top_k", "5")
 
-	// Parse limit
-	limit := 10
-	if limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
+	// Parse top_k
+	topK := 5
+	if topKStr != "" {
+		if k, err := strconv.Atoi(topKStr); err == nil && k > 0 && k <= 100 {
+			topK = k
 		}
 	}
 
-	req := models.ConversationSearchRequest{
-		Query:  query,
-		UserID: userID,
-		Limit:  limit,
-	}
-
 	// Validate required fields
-	if req.Query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "query is required",
+	if query == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.ErrorInfo{
+				Code:    "INVALID_REQUEST",
+				Message: "Query text cannot be empty",
+				Details: map[string]string{
+					"field":  "query",
+					"reason": "required field missing",
+				},
+			},
+			Metadata: models.Metadata{},
 		})
 		return
+	}
+
+	req := models.ConversationSearchRequest{
+		Query: query,
+		Limit: topK,
 	}
 
 	// Search conversations
 	results, err := sch.conversationService.SearchConversations(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "failed to search conversations",
-			"details": err.Error(),
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Success: false,
+			Error: &models.ErrorInfo{
+				Code:    "INTERNAL_ERROR",
+				Message: "failed to search conversations",
+				Details: map[string]string{
+					"error": err.Error(),
+				},
+			},
+			Metadata: models.Metadata{},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"results": results,
-		"count":   len(results),
+	searchTimeMs := time.Since(startTime).Milliseconds()
+
+	// Build search response
+	searchResp := models.SearchResponse{
+		Query:        query,
+		Results:      results,
+		TotalResults: len(results),
+		SearchMetadata: models.SearchMetadata{
+			EmbeddingModel: "text-embedding-3-large",
+			VectorDB:       "qdrant",
+			SearchTimeMs:   searchTimeMs,
+		},
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success:  true,
+		Data:     searchResp,
+		Metadata: models.Metadata{},
 	})
 }

@@ -32,24 +32,36 @@ func NewConversationService(
 }
 
 // SaveConversation saves a new conversation and its embedding
-func (cs *ConversationService) SaveConversation(ctx context.Context, req *models.ConversationSaveRequest) (*models.ConversationResponse, error) {
-	// Generate a new ID
-	conversationID := uuid.New().String()
+func (cs *ConversationService) SaveConversation(ctx context.Context, req *models.ConversationSaveRequest) (*models.SaveResponse, error) {
+	// Use provided conversation ID or generate a new one
+	conversationID := req.ConversationID
+	if conversationID == "" {
+		conversationID = uuid.New().String()
+	}
 
-	// Create embedding from the question
-	embedding, err := cs.embeddingProvider.Embed(ctx, req.Question)
+	// Combine messages into a single text for embedding
+	var textToEmbed string
+	for _, msg := range req.Messages {
+		textToEmbed += msg.Content + " "
+	}
+
+	// Create embedding from the combined messages
+	embedding, err := cs.embeddingProvider.Embed(ctx, textToEmbed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create embedding: %w", err)
 	}
 
 	// Save conversation to PostgreSQL
 	now := time.Now()
+	metadataStr := ""
+	if req.Metadata != nil {
+		metadataStr = fmt.Sprintf("{\"source\":\"%s\",\"session_id\":\"%s\"}", req.Metadata.Source, req.Metadata.SessionID)
+	}
+
 	conversation := &models.Conversation{
 		ID:        conversationID,
-		UserID:    req.UserID,
-		Question:  req.Question,
-		Answer:    req.Answer,
-		Metadata:  req.Metadata,
+		Question:  textToEmbed,
+		Metadata:  metadataStr,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -60,7 +72,6 @@ func (cs *ConversationService) SaveConversation(ctx context.Context, req *models
 
 	// Save embedding to Qdrant
 	metadata := map[string]interface{}{
-		"user_id":    req.UserID,
 		"created_at": now.Unix(),
 	}
 
@@ -69,18 +80,17 @@ func (cs *ConversationService) SaveConversation(ctx context.Context, req *models
 		fmt.Printf("warning: failed to save vector to qdrant: %v\n", err)
 	}
 
-	return &models.ConversationResponse{
-		ID:        conversationID,
-		UserID:    req.UserID,
-		Question:  req.Question,
-		Answer:    req.Answer,
-		Metadata:  req.Metadata,
-		CreatedAt: now,
+	return &models.SaveResponse{
+		ConversationID:   conversationID,
+		VectorsCreated:   1,
+		MessagesStored:   len(req.Messages),
+		StoredAt:         now.UTC().Format(time.RFC3339),
+		ProcessingTimeMs: 0, // Will be set by handler
 	}, nil
 }
 
 // SearchConversations searches for similar conversations
-func (cs *ConversationService) SearchConversations(ctx context.Context, req *models.ConversationSearchRequest) ([]*models.ConversationResponse, error) {
+func (cs *ConversationService) SearchConversations(ctx context.Context, req *models.ConversationSearchRequest) ([]models.ConversationSearchResult, error) {
 	// Set default limit
 	limit := req.Limit
 	if limit <= 0 || limit > 100 {
@@ -100,7 +110,7 @@ func (cs *ConversationService) SearchConversations(ctx context.Context, req *mod
 	}
 
 	if len(searchResults) == 0 {
-		return []*models.ConversationResponse{}, nil
+		return []models.ConversationSearchResult{}, nil
 	}
 
 	// Extract conversation IDs from search results
@@ -108,10 +118,8 @@ func (cs *ConversationService) SearchConversations(ctx context.Context, req *mod
 	scoreMap := make(map[string]float32)
 
 	for _, result := range searchResults {
-		if result.Conversation != nil && result.Conversation.ID != "" {
-			conversationIDs = append(conversationIDs, result.Conversation.ID)
-			scoreMap[result.Conversation.ID] = result.Score
-		}
+		conversationIDs = append(conversationIDs, result.ConversationID)
+		scoreMap[result.ConversationID] = result.Score
 	}
 
 	// Get conversations from PostgreSQL
@@ -120,17 +128,29 @@ func (cs *ConversationService) SearchConversations(ctx context.Context, req *mod
 		return nil, fmt.Errorf("failed to get conversations: %w", err)
 	}
 
-	// Convert to response format with scores
-	var responses []*models.ConversationResponse
+	// Convert to response format with scores and messages
+	var responses []models.ConversationSearchResult
 	for _, conv := range conversations {
-		responses = append(responses, &models.ConversationResponse{
-			ID:        conv.ID,
-			UserID:    conv.UserID,
-			Question:  conv.Question,
-			Answer:    conv.Answer,
-			Metadata:  conv.Metadata,
-			Score:     scoreMap[conv.ID],
-			CreatedAt: conv.CreatedAt,
+		// Create message array from question and answer
+		messages := []models.Message{}
+		if conv.Question != "" {
+			messages = append(messages, models.Message{
+				Role:    "user",
+				Content: conv.Question,
+			})
+		}
+		if conv.Answer != "" {
+			messages = append(messages, models.Message{
+				Role:    "assistant",
+				Content: conv.Answer,
+			})
+		}
+
+		responses = append(responses, models.ConversationSearchResult{
+			ConversationID: conv.ID,
+			Score:          scoreMap[conv.ID],
+			Timestamp:      conv.CreatedAt,
+			Messages:       messages,
 		})
 	}
 

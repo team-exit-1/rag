@@ -23,9 +23,56 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/conversations": {
+        "/api/rag/conversation/search": {
+            "get": {
+                "description": "Search for conversations by semantic similarity",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "conversations"
+                ],
+                "summary": "Search conversations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result limit (default: 10, max: 100)",
+                        "name": "top_k",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results with metadata",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rag/conversation/store": {
             "post": {
-                "description": "Save a new conversation with question and answer",
+                "description": "Save a new conversation with messages and metadata",
                 "consumes": [
                     "application/json"
                 ],
@@ -49,95 +96,29 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Conversation saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/models.ConversationResponse"
+                            "$ref": "#/definitions/models.APIResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.APIResponse"
                         }
                     },
                     "500": {
                         "description": "Server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.APIResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/conversations/search": {
+        "/api/rag/health": {
             "get": {
-                "description": "Search for conversations by semantic similarity",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "conversations"
-                ],
-                "summary": "Search conversations",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Result limit (default: 10, max: 100)",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Search results with count",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/health": {
-            "get": {
-                "description": "Check if the RAG server is healthy",
+                "description": "Check if the RAG server and its dependencies are healthy",
                 "produces": [
                     "application/json"
                 ],
@@ -147,9 +128,15 @@ const docTemplate = `{
                 "summary": "Health check",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Server is healthy",
                         "schema": {
-                            "$ref": "#/definitions/handler.HealthResponse"
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
                         }
                     }
                 }
@@ -157,56 +144,69 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.HealthResponse": {
+        "models.APIResponse": {
             "type": "object",
             "properties": {
-                "service": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ConversationResponse": {
-            "type": "object",
-            "properties": {
-                "answer": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
+                "data": {},
+                "error": {
+                    "$ref": "#/definitions/models.ErrorInfo"
                 },
                 "metadata": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Metadata"
                 },
-                "question": {
-                    "type": "string"
-                },
-                "score": {
-                    "type": "number"
-                },
-                "user_id": {
-                    "type": "string"
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
         "models.ConversationSaveRequest": {
             "type": "object",
             "properties": {
-                "answer": {
+                "conversation_id": {
                     "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Message"
+                    }
                 },
                 "metadata": {
+                    "$ref": "#/definitions/models.Metadata"
+                }
+            }
+        },
+        "models.ErrorInfo": {
+            "type": "object",
+            "properties": {
+                "code": {
                     "type": "string"
                 },
-                "question": {
+                "details": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
                     "type": "string"
                 },
-                "user_id": {
+                "role": {
+                    "description": "\"user\" or \"assistant\"",
+                    "type": "string"
+                }
+            }
+        },
+        "models.Metadata": {
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string"
+                },
+                "source": {
                     "type": "string"
                 }
             }

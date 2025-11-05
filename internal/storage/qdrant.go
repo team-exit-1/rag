@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"io"
 	"net/http"
+	"time"
 
 	"repo-rag-server/internal/models"
 )
@@ -233,11 +234,10 @@ func (qs *QdrantStore) SearchVectors(ctx context.Context, queryVector []float32,
 		}
 
 		result := models.ConversationSearchResult{
-			Conversation: &models.Conversation{
-				ID: conversationID,
-			},
-
-			Score: item.Score,
+			ConversationID: conversationID,
+			Score:          item.Score,
+			Timestamp:      time.Now(), // Will be overridden by service layer
+			Messages:       []models.Message{},
 		}
 		searchResults = append(searchResults, result)
 	}

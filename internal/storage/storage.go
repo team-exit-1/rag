@@ -21,6 +21,20 @@ type ConversationStore interface {
 	Close() error
 }
 
+// PostgresStoreInterface defines the interface for PostgreSQL operations
+type PostgresStoreInterface interface {
+	ConversationStore
+	// Ping checks the database connection
+	Ping(ctx context.Context) error
+}
+
+// QdrantStoreInterface defines the interface for Qdrant operations
+type QdrantStoreInterface interface {
+	VectorStore
+	// CollectionExists checks if a collection exists
+	CollectionExists(ctx context.Context) (bool, error)
+}
+
 // VectorStore defines the interface for storing and searching vectors
 type VectorStore interface {
 	// SaveVector saves an embedding vector with metadata

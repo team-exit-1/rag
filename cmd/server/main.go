@@ -72,7 +72,7 @@ func main() {
 	)
 
 	// Setup Gin router
-	router := api.Router(conversationService)
+	router := api.Router(conversationService, postgresStore, qdrantStore)
 
 	// Start server
 	addr := fmt.Sprintf(":%d", cfg.Port)

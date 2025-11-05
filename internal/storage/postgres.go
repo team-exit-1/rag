@@ -146,3 +146,8 @@ func (ps *PostgresStore) Close() error {
 func (ps *PostgresStore) GetDB() *sql.DB {
 	return ps.db
 }
+
+// Ping checks the database connection
+func (ps *PostgresStore) Ping(ctx context.Context) error {
+	return ps.db.PingContext(ctx)
+}
