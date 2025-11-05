@@ -58,8 +58,8 @@ func (qs *QdrantStore) InitializeCollection(ctx context.Context, vectorSize int)
 	}
 	defer resp.Body.Close()
 
-	// 200 OK or 400 Bad Request (if collection already exists) are acceptable
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusBadRequest {
+	// 200 OK, 201 Created, 400 Bad Request, or 409 Conflict (collection already exists) are acceptable
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusBadRequest && resp.StatusCode != http.StatusConflict {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("qdrant returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
