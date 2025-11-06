@@ -44,6 +44,39 @@ definitions:
       source:
         type: string
     type: object
+  models.PersonalInfoCreateRequest:
+    properties:
+      category:
+        type: string
+      content:
+        type: string
+      importance:
+        enum:
+        - high
+        - medium
+        - low
+        type: string
+      user_id:
+        type: string
+    required:
+    - category
+    - content
+    - importance
+    - user_id
+    type: object
+  models.PersonalInfoUpdateRequest:
+    properties:
+      category:
+        type: string
+      content:
+        type: string
+      importance:
+        enum:
+        - high
+        - medium
+        - low
+        type: string
+    type: object
 info:
   contact:
     name: API Support
@@ -134,4 +167,153 @@ paths:
       summary: Health check
       tags:
       - health
+  /api/rag/personal-info:
+    post:
+      consumes:
+      - application/json
+      description: Save personal information provided by guardians (medical, contact,
+        emergency, etc.)
+      parameters:
+      - description: Personal info creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PersonalInfoCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Personal info created successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Create personal information
+      tags:
+      - personal-info
+  /api/rag/personal-info/{info_id}:
+    delete:
+      description: Delete a personal information entry by ID
+      parameters:
+      - description: Personal info ID
+        in: path
+        name: info_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Personal info deleted successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Personal info not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Delete personal information
+      tags:
+      - personal-info
+    get:
+      description: Retrieve a personal information entry by ID
+      parameters:
+      - description: Personal info ID
+        in: path
+        name: info_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Personal info retrieved successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Personal info not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Get personal information
+      tags:
+      - personal-info
+    put:
+      consumes:
+      - application/json
+      description: Update an existing personal information entry
+      parameters:
+      - description: Personal info ID
+        in: path
+        name: info_id
+        required: true
+        type: string
+      - description: Personal info update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PersonalInfoUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Personal info updated successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "404":
+          description: Personal info not found
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Update personal information
+      tags:
+      - personal-info
+  /api/rag/personal-info/user/{user_id}:
+    get:
+      description: Retrieve all personal information entries for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Personal info list retrieved successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Get all personal information for a user
+      tags:
+      - personal-info
 swagger: "2.0"

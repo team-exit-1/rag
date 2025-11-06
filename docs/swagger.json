@@ -134,6 +134,230 @@
                     }
                 }
             }
+        },
+        "/api/rag/personal-info": {
+            "post": {
+                "description": "Save personal information provided by guardians (medical, contact, emergency, etc.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-info"
+                ],
+                "summary": "Create personal information",
+                "parameters": [
+                    {
+                        "description": "Personal info creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PersonalInfoCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Personal info created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rag/personal-info/user/{user_id}": {
+            "get": {
+                "description": "Retrieve all personal information entries for a specific user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-info"
+                ],
+                "summary": "Get all personal information for a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personal info list retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rag/personal-info/{info_id}": {
+            "get": {
+                "description": "Retrieve a personal information entry by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-info"
+                ],
+                "summary": "Get personal information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Personal info ID",
+                        "name": "info_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personal info retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Personal info not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing personal information entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-info"
+                ],
+                "summary": "Update personal information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Personal info ID",
+                        "name": "info_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Personal info update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PersonalInfoUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personal info updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Personal info not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a personal information entry by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-info"
+                ],
+                "summary": "Delete personal information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Personal info ID",
+                        "name": "info_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personal info deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Personal info not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.APIResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -201,6 +425,53 @@
                 },
                 "source": {
                     "type": "string"
+                }
+            }
+        },
+        "models.PersonalInfoCreateRequest": {
+            "type": "object",
+            "required": [
+                "category",
+                "content",
+                "importance",
+                "user_id"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "importance": {
+                    "type": "string",
+                    "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                    ]
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PersonalInfoUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "importance": {
+                    "type": "string",
+                    "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                    ]
                 }
             }
         }
