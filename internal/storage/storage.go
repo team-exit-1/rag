@@ -24,6 +24,7 @@ type ConversationStore interface {
 // PostgresStoreInterface defines the interface for PostgreSQL operations
 type PostgresStoreInterface interface {
 	ConversationStore
+	PersonalInfoStore
 	// Ping checks the database connection
 	Ping(ctx context.Context) error
 }
@@ -57,4 +58,25 @@ type EmbeddingProvider interface {
 
 	// EmbedBatch converts multiple texts to vectors
 	EmbedBatch(ctx context.Context, texts []string) ([][]float32, error)
+}
+
+// PersonalInfoStore defines the interface for storing personal information
+type PersonalInfoStore interface {
+	// SavePersonalInfo saves personal information to the database
+	SavePersonalInfo(ctx context.Context, personalInfo *models.PersonalInfo) error
+
+	// GetPersonalInfo retrieves personal information by ID
+	GetPersonalInfo(ctx context.Context, id string) (*models.PersonalInfo, error)
+
+	// GetPersonalInfoByUser retrieves all personal information for a user
+	GetPersonalInfoByUser(ctx context.Context, userID string) ([]*models.PersonalInfo, error)
+
+	// UpdatePersonalInfo updates existing personal information
+	UpdatePersonalInfo(ctx context.Context, personalInfo *models.PersonalInfo) error
+
+	// DeletePersonalInfo deletes personal information by ID
+	DeletePersonalInfo(ctx context.Context, id string) error
+
+	// Close closes the store
+	Close() error
 }

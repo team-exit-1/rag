@@ -151,3 +151,158 @@ func (ps *PostgresStore) GetDB() *sql.DB {
 func (ps *PostgresStore) Ping(ctx context.Context) error {
 	return ps.db.PingContext(ctx)
 }
+
+// SavePersonalInfo saves a new personal information entry to PostgreSQL
+func (ps *PostgresStore) SavePersonalInfo(ctx context.Context, personalInfo *models.PersonalInfo) error {
+	query := `
+		INSERT INTO personal_info (id, user_id, content, category, importance, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (id) DO UPDATE SET
+			content = EXCLUDED.content,
+			category = EXCLUDED.category,
+			importance = EXCLUDED.importance,
+			updated_at = EXCLUDED.updated_at
+	`
+
+	_, err := ps.db.ExecContext(
+		ctx,
+		query,
+		personalInfo.ID,
+		personalInfo.UserID,
+		personalInfo.Content,
+		personalInfo.Category,
+		personalInfo.Importance,
+		personalInfo.CreatedAt,
+		personalInfo.UpdatedAt,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to save personal info: %w", err)
+	}
+
+	return nil
+}
+
+// GetPersonalInfo retrieves a personal information entry by ID from PostgreSQL
+func (ps *PostgresStore) GetPersonalInfo(ctx context.Context, id string) (*models.PersonalInfo, error) {
+	query := `
+		SELECT id, user_id, content, category, importance, created_at, updated_at
+		FROM personal_info
+		WHERE id = $1
+	`
+
+	personalInfo := &models.PersonalInfo{}
+	err := ps.db.QueryRowContext(ctx, query, id).Scan(
+		&personalInfo.ID,
+		&personalInfo.UserID,
+		&personalInfo.Content,
+		&personalInfo.Category,
+		&personalInfo.Importance,
+		&personalInfo.CreatedAt,
+		&personalInfo.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get personal info: %w", err)
+	}
+
+	return personalInfo, nil
+}
+
+// GetPersonalInfoByUser retrieves all personal information entries for a user from PostgreSQL
+func (ps *PostgresStore) GetPersonalInfoByUser(ctx context.Context, userID string) ([]*models.PersonalInfo, error) {
+	query := `
+		SELECT id, user_id, content, category, importance, created_at, updated_at
+		FROM personal_info
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+	`
+
+	rows, err := ps.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query personal info: %w", err)
+	}
+	defer rows.Close()
+
+	var personalInfoList []*models.PersonalInfo
+	for rows.Next() {
+		personalInfo := &models.PersonalInfo{}
+		err := rows.Scan(
+			&personalInfo.ID,
+			&personalInfo.UserID,
+			&personalInfo.Content,
+			&personalInfo.Category,
+			&personalInfo.Importance,
+			&personalInfo.CreatedAt,
+			&personalInfo.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan personal info: %w", err)
+		}
+		personalInfoList = append(personalInfoList, personalInfo)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating personal info: %w", err)
+	}
+
+	return personalInfoList, nil
+}
+
+// UpdatePersonalInfo updates an existing personal information entry in PostgreSQL
+func (ps *PostgresStore) UpdatePersonalInfo(ctx context.Context, personalInfo *models.PersonalInfo) error {
+	query := `
+		UPDATE personal_info
+		SET content = $1, category = $2, importance = $3, updated_at = $4
+		WHERE id = $5
+	`
+
+	result, err := ps.db.ExecContext(
+		ctx,
+		query,
+		personalInfo.Content,
+		personalInfo.Category,
+		personalInfo.Importance,
+		personalInfo.UpdatedAt,
+		personalInfo.ID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update personal info: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("personal info not found")
+	}
+
+	return nil
+}
+
+// DeletePersonalInfo deletes a personal information entry from PostgreSQL
+func (ps *PostgresStore) DeletePersonalInfo(ctx context.Context, id string) error {
+	query := `DELETE FROM personal_info WHERE id = $1`
+
+	result, err := ps.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete personal info: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("personal info not found")
+	}
+
+	return nil
+}
