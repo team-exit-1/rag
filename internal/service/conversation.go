@@ -152,11 +152,21 @@ func (cs *ConversationService) SearchConversations(ctx context.Context, req *mod
 			})
 		}
 
+		// Parse metadata to extract conversation_score
+		var conversationScore *int
+		if conv.Metadata != "" && conv.Metadata != "{}" {
+			var metadata models.Metadata
+			if err := json.Unmarshal([]byte(conv.Metadata), &metadata); err == nil {
+				conversationScore = metadata.ConversationScore
+			}
+		}
+
 		responses = append(responses, models.ConversationSearchResult{
-			ConversationID: conv.ID,
-			Score:          scoreMap[conv.ID],
-			Timestamp:      conv.CreatedAt,
-			Messages:       messages,
+			ConversationID:    conv.ID,
+			Score:             scoreMap[conv.ID],
+			ConversationScore: conversationScore,
+			Timestamp:         conv.CreatedAt,
+			Messages:          messages,
 		})
 	}
 

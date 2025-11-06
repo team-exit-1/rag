@@ -22,10 +22,11 @@ type ConversationSearchRequest struct {
 
 // ConversationSearchResult represents a search result with similarity score
 type ConversationSearchResult struct {
-	ConversationID string    `json:"conversation_id"`
-	Score          float32   `json:"score"`
-	Timestamp      time.Time `json:"timestamp"`
-	Messages       []Message `json:"messages"`
+	ConversationID    string    `json:"conversation_id"`
+	Score             float32   `json:"score"`
+	ConversationScore *int      `json:"conversation_score,omitempty"`
+	Timestamp         time.Time `json:"timestamp"`
+	Messages          []Message `json:"messages"`
 }
 
 // Message represents a single message in a conversation
@@ -43,8 +44,10 @@ type ConversationSaveRequest struct {
 
 // Metadata represents conversation metadata
 type Metadata struct {
-	Source    string `json:"source,omitempty"`
-	SessionID string `json:"session_id,omitempty"`
+	Source            string `json:"source,omitempty"`
+	SessionID         string `json:"session_id,omitempty"`
+	Type              string `json:"type,omitempty"`
+	ConversationScore *int   `json:"conversation_score,omitempty"`
 }
 
 // ConversationResponse represents a conversation response
